@@ -4,7 +4,8 @@ on:
   push:
     branches: [ main, master ]
   pull_request:
-    branches: [ main, master ]
+    # Run on any PR to any branch
+    types: [ opened, synchronize, reopened ]
 
 jobs:
   test:
