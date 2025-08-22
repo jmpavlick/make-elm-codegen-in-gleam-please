@@ -1,0 +1,56 @@
+# Gleam build artifacts
+/build/
+*.beam
+*.ez
+
+# Gleam package management
+/deps/
+/.gleam/
+manifest.toml
+
+# Generated files
+/priv/generated/
+/gen/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.#*
+
+# Node.js (if using JavaScript target)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Erlang/Elixir
+_build/
+deps/
+*.plt
+*.plt.old
+erl_crash.dump
+
+# Temporary files
+*.tmp
+*.temp
+/tmp/
+
+# Log files
+*.log
+
+# Environment files
+.env
+.env.local
+.env.*.local
