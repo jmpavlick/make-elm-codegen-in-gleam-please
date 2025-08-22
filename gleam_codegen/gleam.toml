@@ -1,0 +1,9 @@
+name = "gleam_codegen"
+version = "1.0.0"
+description = "A Gleam implementation of elm-codegen - programmatically generate Gleam code"
+
+[dependencies]
+gleam_stdlib = ">= 0.34.0 and < 2.0.0"
+
+[dev-dependencies]
+gleeunit = ">= 1.0.0 and < 2.0.0"
