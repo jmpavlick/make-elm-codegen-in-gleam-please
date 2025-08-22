@@ -320,17 +320,20 @@ gleam format --check src test
 
 ### Project Structure
 ```
-gleam_codegen/
+repository/
 ├── .github/workflows/ci.yml    # CI/CD configuration
-├── src/
-│   ├── gleam_codegen.gleam     # Main API
-│   ├── gleam_codegen/
-│   │   ├── internal/compiler.gleam    # Core AST types
-│   │   ├── op.gleam                   # Operators
-│   │   ├── to_string.gleam           # Code rendering
-│   │   ├── package_parser.gleam      # Package parsing
-│   │   └── binding_generator.gleam   # Binding generation
-│   └── [demo files]
-├── test/                       # Comprehensive test suite
-└── README.md                   # This file
+├── gleam_codegen/              # Main project directory
+│   ├── src/
+│   │   ├── gleam_codegen.gleam     # Main API
+│   │   ├── gleam_codegen/
+│   │   │   ├── internal/compiler.gleam    # Core AST types
+│   │   │   ├── op.gleam                   # Operators
+│   │   │   ├── to_string.gleam           # Code rendering
+│   │   │   ├── package_parser.gleam      # Package parsing
+│   │   │   └── binding_generator.gleam   # Binding generation
+│   │   └── [demo files]
+│   ├── test/                   # Comprehensive test suite
+│   ├── gleam.toml             # Project configuration
+│   └── README.md              # This file
+└── [other files]
 ```

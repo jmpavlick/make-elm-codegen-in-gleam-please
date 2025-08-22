@@ -45,28 +45,37 @@ jobs:
       uses: actions/cache@v3
       with:
         path: |
-          build/packages
+          gleam_codegen/build/packages
           ~/.cache/gleam
-        key: ${{ runner.os }}-gleam-${{ matrix.gleam-version }}-${{ hashFiles('**/gleam.toml') }}
+        key: ${{ runner.os }}-gleam-${{ matrix.gleam-version }}-${{ hashFiles('gleam_codegen/gleam.toml') }}
         restore-keys: |
           ${{ runner.os }}-gleam-${{ matrix.gleam-version }}-
           ${{ runner.os }}-gleam-
           
     - name: Download dependencies
-      run: gleam deps download
+      run: |
+        cd gleam_codegen
+        gleam deps download
       
     - name: Check formatting
-      run: gleam format --check src test
+      run: |
+        cd gleam_codegen
+        gleam format --check src test
       
     - name: Build project
-      run: gleam build --target ${{ matrix.target }}
+      run: |
+        cd gleam_codegen
+        gleam build --target ${{ matrix.target }}
       
     - name: Run tests
-      run: gleam test --target ${{ matrix.target }}
+      run: |
+        cd gleam_codegen
+        gleam test --target ${{ matrix.target }}
       
     - name: Run example demos (JavaScript only)
       if: matrix.target == 'javascript'
       run: |
+        cd gleam_codegen
         echo "Running basic example..."
         gleam run --target javascript --module example
         echo "Running full demo..."
@@ -92,10 +101,14 @@ jobs:
         sudo mv gleam /usr/local/bin/
         
     - name: Check formatting
-      run: gleam format --check src test
+      run: |
+        cd gleam_codegen
+        gleam format --check src test
       
     - name: Check for unused dependencies
-      run: gleam deps list --outdated || true
+      run: |
+        cd gleam_codegen
+        gleam deps list --outdated || true
       
   docs:
     name: Generate Documentation
@@ -113,11 +126,13 @@ jobs:
         sudo mv gleam /usr/local/bin/
         
     - name: Build documentation
-      run: gleam docs build
+      run: |
+        cd gleam_codegen
+        gleam docs build
       
     - name: Upload documentation artifacts
       uses: actions/upload-artifact@v3
       with:
         name: documentation
-        path: build/docs/
+        path: gleam_codegen/build/docs/
         retention-days: 30
