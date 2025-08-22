@@ -1,5 +1,9 @@
 # Gleam Codegen
 
+[![CI](https://github.com/your-username/gleam-codegen/workflows/CI/badge.svg)](https://github.com/your-username/gleam-codegen/actions)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Gleam](https://img.shields.io/badge/gleam-1.11%2B-ffaff3)](https://gleam.run/)
+
 A Gleam implementation of elm-codegen - a tool for programmatically generating Gleam code.
 
 ## Project Overview
@@ -277,3 +281,56 @@ We have successfully created a **fully functional Gleam implementation of elm-co
 **Key achievement:** You can now programmatically generate Gleam code using a clean, elm-codegen-inspired API **AND** generate bindings for existing Gleam packages. The system handles complex expressions, operator precedence, package parsing, and converts everything back to properly formatted Gleam source code.
 
 This demonstrates that systematic language-to-language translation is not only possible but can result in elegant, working software that preserves the best qualities of the original while adapting perfectly to the target language's idioms.
+
+### 🔄 Continuous Integration
+The project includes a robust CI/CD pipeline that:
+- Tests on multiple Gleam versions (1.11.0, 1.12.0)
+- Tests both JavaScript and Erlang targets  
+- Enforces code formatting standards
+- Runs all 25 tests and 4 demo programs
+- Generates documentation automatically
+- Provides quick feedback on PRs and pushes
+
+## 🔧 Development & CI
+
+### GitHub Actions CI/CD
+The project includes comprehensive GitHub Actions workflows:
+
+- **🧪 Testing**: Runs on multiple Gleam versions (1.11.0, 1.12.0) and targets (JavaScript, Erlang)
+- **🎨 Formatting**: Ensures consistent code formatting with `gleam format`
+- **📚 Documentation**: Generates and uploads documentation artifacts
+- **🚀 Demos**: Runs all example programs to verify functionality
+
+### Running Locally
+```bash
+# Install dependencies
+gleam deps download
+
+# Run tests
+gleam test --target javascript
+
+# Run all demos
+gleam run --target javascript --module demo
+gleam run --target javascript --module package_binding_demo
+gleam run --target javascript --module complete_workflow_demo
+
+# Check formatting
+gleam format --check src test
+```
+
+### Project Structure
+```
+gleam_codegen/
+├── .github/workflows/ci.yml    # CI/CD configuration
+├── src/
+│   ├── gleam_codegen.gleam     # Main API
+│   ├── gleam_codegen/
+│   │   ├── internal/compiler.gleam    # Core AST types
+│   │   ├── op.gleam                   # Operators
+│   │   ├── to_string.gleam           # Code rendering
+│   │   ├── package_parser.gleam      # Package parsing
+│   │   └── binding_generator.gleam   # Binding generation
+│   └── [demo files]
+├── test/                       # Comprehensive test suite
+└── README.md                   # This file
+```

@@ -12,12 +12,15 @@ pub type File {
   File(
     module_name: List(String),
     declarations: List(c.Declaration),
-    imports: List(c.Module)
+    imports: List(c.Module),
   )
 }
 
 /// Create a basic file with module name and declarations
-pub fn file(module_name: List(String), declarations: List(c.Declaration)) -> File {
+pub fn file(
+  module_name: List(String),
+  declarations: List(c.Declaration),
+) -> File {
   File(module_name, declarations, [])
 }
 
@@ -108,13 +111,19 @@ pub fn divide(left: c.Expression, right: c.Expression) -> c.Expression {
 // ===== CONTROL FLOW =====
 
 /// Create a case expression
-pub fn case_(_subject: c.Expression, _branches: List(#(String, c.Expression))) -> c.Expression {
+pub fn case_(
+  _subject: c.Expression,
+  _branches: List(#(String, c.Expression)),
+) -> c.Expression {
   // TODO: Implement proper case expression
   c.untyped_expression(c.Variable("case_placeholder"))
 }
 
 /// Create a let binding
-pub fn let_(_bindings: List(#(String, c.Expression)), _in_expr: c.Expression) -> c.Expression {
+pub fn let_(
+  _bindings: List(#(String, c.Expression)),
+  _in_expr: c.Expression,
+) -> c.Expression {
   // TODO: Implement proper let expression
   c.untyped_expression(c.Variable("let_placeholder"))
 }
@@ -122,7 +131,10 @@ pub fn let_(_bindings: List(#(String, c.Expression)), _in_expr: c.Expression) ->
 // ===== FUNCTIONS =====
 
 /// Create a function with one argument
-pub fn fn1(arg_name: String, body: fn(c.Expression) -> c.Expression) -> c.Expression {
+pub fn fn1(
+  arg_name: String,
+  body: fn(c.Expression) -> c.Expression,
+) -> c.Expression {
   let arg = variable(arg_name)
   let _body_expr = body(arg)
   // TODO: Implement proper lambda creation
@@ -131,9 +143,9 @@ pub fn fn1(arg_name: String, body: fn(c.Expression) -> c.Expression) -> c.Expres
 
 /// Create a function with two arguments
 pub fn fn2(
-  arg1_name: String, 
-  arg2_name: String, 
-  body: fn(c.Expression, c.Expression) -> c.Expression
+  arg1_name: String,
+  arg2_name: String,
+  body: fn(c.Expression, c.Expression) -> c.Expression,
 ) -> c.Expression {
   let arg1 = variable(arg1_name)
   let arg2 = variable(arg2_name)
@@ -154,7 +166,7 @@ pub fn declaration(name: String, _value: c.Expression) -> c.Declaration {
 pub fn function(
   name: String,
   _args: List(String),
-  _body: c.Expression
+  _body: c.Expression,
 ) -> c.Declaration {
   // TODO: Implement proper function declaration
   c.Comment("TODO: function " <> name)

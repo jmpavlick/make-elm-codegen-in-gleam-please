@@ -16,10 +16,10 @@ import gleam/string
 pub opaque type Index {
   Index(
     module_name: Option(List(String)),
-    counter: Int, 
+    counter: Int,
     trail: List(Int),
     scope: Set(String),
-    typecheck: Bool
+    typecheck: Bool,
   )
 }
 
@@ -45,7 +45,8 @@ pub fn get_name(index: Index, base_name: String) -> String {
   case index {
     Index(_, 0, [], _, _) -> base_name
     Index(_, counter, trail, _, _) -> {
-      let suffix = list.reverse([counter, ..trail])
+      let suffix =
+        list.reverse([counter, ..trail])
         |> list.map(fn(n) { "_" <> int.to_string(n) })
         |> string.join("")
       base_name <> suffix
@@ -72,7 +73,7 @@ pub type Inference {
   Inference(
     type_: GleamType,
     inferences: Dict(String, GleamType),
-    aliases: Dict(String, TypeAlias)
+    aliases: Dict(String, TypeAlias),
   )
 }
 
@@ -84,20 +85,20 @@ pub type TypeAlias {
 pub type GleamType {
   // Basic types
   IntType
-  FloatType  
+  FloatType
   StringType
   BoolType
   NilType
-  
+
   // Compound types
   ListType(GleamType)
   TupleType(List(GleamType))
   FunctionType(List(GleamType), GleamType)
-  
+
   // Custom types
   CustomType(module: List(String), name: String, args: List(GleamType))
   TypeVariable(name: String)
-  
+
   // Result and Option
   ResultType(GleamType, GleamType)
   OptionType(GleamType)
@@ -111,31 +112,31 @@ pub type GleamExpression {
   StringLiteral(String)
   BoolLiteral(Bool)
   NilLiteral
-  
+
   // Variables and references
   Variable(String)
   FieldAccess(GleamExpression, String)
-  
+
   // Function calls
   FunctionCall(GleamExpression, List(GleamExpression))
-  
+
   // Control flow
   Case(GleamExpression, List(#(Pattern, GleamExpression)))
   Let(List(#(Pattern, GleamExpression)), GleamExpression)
-  
+
   // Functions
   Lambda(List(Pattern), GleamExpression)
-  
+
   // Data structures
   List(List(GleamExpression))
   Tuple(List(GleamExpression))
   Record(List(#(String, GleamExpression)))
   RecordUpdate(GleamExpression, List(#(String, GleamExpression)))
-  
+
   // Operators (will be expanded)
   BinaryOp(String, GleamExpression, GleamExpression)
   UnaryOp(String, GleamExpression)
-  
+
   // Pipe
   Pipe(GleamExpression, GleamExpression)
 }
@@ -160,7 +161,7 @@ pub type ExpressionDetails {
   ExpressionDetails(
     expression: GleamExpression,
     annotation: Result(Inference, List(InferenceError)),
-    imports: List(Module)
+    imports: List(Module),
   )
 }
 
@@ -176,7 +177,10 @@ pub fn expression(builder: fn(Index) -> ExpressionDetails) -> Expression {
 }
 
 /// Extract details from an expression given an index
-pub fn to_expression_details(expr: Expression, index: Index) -> ExpressionDetails {
+pub fn to_expression_details(
+  expr: Expression,
+  index: Index,
+) -> ExpressionDetails {
   case expr {
     Expression(builder) -> builder(index)
   }
@@ -206,7 +210,7 @@ pub type DeclarationDetails {
     exposed: Expose,
     imports: List(Module),
     docs: Option(String),
-    to_body: fn(Index) -> DeclarationBody
+    to_body: fn(Index) -> DeclarationBody,
   )
 }
 
@@ -214,7 +218,7 @@ pub type DeclarationBody {
   DeclarationBody(
     declaration: GleamDeclaration,
     additional_imports: List(Module),
-    warning: Option(Warning)
+    warning: Option(Warning),
   )
 }
 
@@ -228,26 +232,18 @@ pub type GleamDeclaration {
     name: String,
     args: List(#(String, Option(GleamType))),
     return_type: Option(GleamType),
-    body: GleamExpression
+    body: GleamExpression,
   )
-  
+
   TypeDecl(
     name: String,
     vars: List(String),
-    constructors: List(#(String, List(GleamType)))
+    constructors: List(#(String, List(GleamType))),
   )
-  
-  TypeAliasDecl(
-    name: String, 
-    vars: List(String),
-    type_: GleamType
-  )
-  
-  ConstDecl(
-    name: String,
-    type_: Option(GleamType),
-    value: GleamExpression
-  )
+
+  TypeAliasDecl(name: String, vars: List(String), type_: GleamType)
+
+  ConstDecl(name: String, type_: Option(GleamType), value: GleamExpression)
 }
 
 // ===== UTILITY FUNCTIONS =====
@@ -258,7 +254,7 @@ pub fn simple_expression(expr: GleamExpression, type_: GleamType) -> Expression 
     ExpressionDetails(
       expression: expr,
       annotation: Ok(Inference(type_, dict.new(), dict.new())),
-      imports: []
+      imports: [],
     )
   })
 }
@@ -269,13 +265,16 @@ pub fn untyped_expression(expr: GleamExpression) -> Expression {
     ExpressionDetails(
       expression: expr,
       annotation: Error([UnknownVariable("untyped")]),
-      imports: []
+      imports: [],
     )
   })
 }
 
 /// Merge two sets of imports
-pub fn merge_imports(imports1: List(Module), imports2: List(Module)) -> List(Module) {
+pub fn merge_imports(
+  imports1: List(Module),
+  imports2: List(Module),
+) -> List(Module) {
   list.append(imports1, imports2)
   |> list.unique
 }

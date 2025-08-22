@@ -1,12 +1,12 @@
 // Code rendering module for gleam-codegen
 // Maps to elm-codegen's ToString and Internal.Write modules
 
-import gleam_codegen/internal/compiler as c
-import gleam/int
 import gleam/float
-import gleam/string
+import gleam/int
 import gleam/list
 import gleam/option.{None}
+import gleam/string
+import gleam_codegen/internal/compiler as c
 
 // ===== RENDERING CONTEXT =====
 
@@ -44,116 +44,123 @@ pub fn render_expression(expr: c.GleamExpression, context: Context) -> String {
     c.BoolLiteral(True) -> "True"
     c.BoolLiteral(False) -> "False"
     c.NilLiteral -> "Nil"
-    
+
     // Variables and references
     c.Variable(name) -> name
-    c.FieldAccess(expr, field) -> 
+    c.FieldAccess(expr, field) ->
       render_expression(expr, context) <> "." <> field
-    
+
     // Function calls
     c.FunctionCall(func, args) -> {
       let func_str = render_expression(func, context)
-      let args_str = list.map(args, fn(arg) { render_expression(arg, context) })
+      let args_str =
+        list.map(args, fn(arg) { render_expression(arg, context) })
         |> string.join(", ")
       func_str <> "(" <> args_str <> ")"
     }
-    
+
     // Binary operators
     c.BinaryOp(op, left, right) -> {
       let op_precedence = get_operator_precedence(op)
       // Need parentheses when the context has higher precedence (binds tighter)
       let needs_parens = context.precedence > op_precedence
-      
+
       // Create contexts for left and right sides
       // Use a high precedence to force parentheses on lower precedence operations
       let child_context = Context(op_precedence, context.indent)
-      
+
       let left_str = render_expression(left, child_context)
       let right_str = render_expression(right, child_context)
       let expr_str = left_str <> " " <> op <> " " <> right_str
-      
+
       case needs_parens {
         True -> "(" <> expr_str <> ")"
         False -> expr_str
       }
     }
-    
+
     // Unary operators
     c.UnaryOp(op, expr) -> {
       let expr_str = render_expression(expr, bottom_context())
       op <> expr_str
     }
-    
+
     // Pipe operator (special case)
     c.Pipe(left, right) -> {
       let left_str = render_expression(left, Context(1, context.indent))
       let right_str = render_expression(right, Context(0, context.indent))
       left_str <> " |> " <> right_str
     }
-    
+
     // Data structures
     c.List(items) -> {
-      let items_str = list.map(items, fn(item) { render_expression(item, top_context()) })
+      let items_str =
+        list.map(items, fn(item) { render_expression(item, top_context()) })
         |> string.join(", ")
       "[" <> items_str <> "]"
     }
-    
+
     c.Tuple(items) -> {
-      let items_str = list.map(items, fn(item) { render_expression(item, top_context()) })
+      let items_str =
+        list.map(items, fn(item) { render_expression(item, top_context()) })
         |> string.join(", ")
       "#(" <> items_str <> ")"
     }
-    
+
     c.Record(fields) -> {
-      let fields_str = list.map(fields, fn(field) {
-        let #(name, value) = field
-        name <> ": " <> render_expression(value, top_context())
-      })
-      |> string.join(", ")
+      let fields_str =
+        list.map(fields, fn(field) {
+          let #(name, value) = field
+          name <> ": " <> render_expression(value, top_context())
+        })
+        |> string.join(", ")
       case list.is_empty(fields) {
         True -> "{}"
         False -> "{ " <> fields_str <> " }"
       }
     }
-    
+
     c.RecordUpdate(base, updates) -> {
       let base_str = render_expression(base, context)
-      let updates_str = list.map(updates, fn(update) {
-        let #(field, value) = update
-        field <> ": " <> render_expression(value, top_context())
-      })
-      |> string.join(", ")
+      let updates_str =
+        list.map(updates, fn(update) {
+          let #(field, value) = update
+          field <> ": " <> render_expression(value, top_context())
+        })
+        |> string.join(", ")
       case list.is_empty(updates) {
         True -> base_str
         False -> "{ " <> base_str <> " with " <> updates_str <> " }"
       }
     }
-    
+
     // Control flow
     c.Case(subject, branches) -> {
       let subject_str = render_expression(subject, top_context())
-      let branches_str = list.map(branches, fn(branch) {
-        let #(pattern, expr) = branch
-        let pattern_str = render_pattern(pattern)
-        let expr_str = render_expression(expr, top_context())
-        "  " <> pattern_str <> " -> " <> expr_str
-      })
-      |> string.join("\n")
+      let branches_str =
+        list.map(branches, fn(branch) {
+          let #(pattern, expr) = branch
+          let pattern_str = render_pattern(pattern)
+          let expr_str = render_expression(expr, top_context())
+          "  " <> pattern_str <> " -> " <> expr_str
+        })
+        |> string.join("\n")
       "case " <> subject_str <> " {\n" <> branches_str <> "\n}"
     }
-    
+
     c.Let(bindings, body) -> {
-      let bindings_str = list.map(bindings, fn(binding) {
-        let #(pattern, expr) = binding
-        let pattern_str = render_pattern(pattern)
-        let expr_str = render_expression(expr, top_context())
-        "  let " <> pattern_str <> " = " <> expr_str
-      })
-      |> string.join("\n")
+      let bindings_str =
+        list.map(bindings, fn(binding) {
+          let #(pattern, expr) = binding
+          let pattern_str = render_pattern(pattern)
+          let expr_str = render_expression(expr, top_context())
+          "  let " <> pattern_str <> " = " <> expr_str
+        })
+        |> string.join("\n")
       let body_str = render_expression(body, top_context())
       "{\n" <> bindings_str <> "\n  " <> body_str <> "\n}"
     }
-    
+
     // Functions
     c.Lambda(args, body) -> {
       let args_str = list.map(args, render_pattern) |> string.join(", ")
@@ -176,27 +183,28 @@ pub fn render_pattern(pattern: c.Pattern) -> String {
     c.BoolPattern(False) -> "False"
     c.NilPattern -> "Nil"
     c.DiscardPattern -> "_"
-    
+
     c.ListPattern(patterns) -> {
       let patterns_str = list.map(patterns, render_pattern) |> string.join(", ")
       "[" <> patterns_str <> "]"
     }
-    
+
     c.TuplePattern(patterns) -> {
       let patterns_str = list.map(patterns, render_pattern) |> string.join(", ")
       "#(" <> patterns_str <> ")"
     }
-    
+
     c.ConstructorPattern(name, patterns) -> {
       case list.is_empty(patterns) {
         True -> name
         False -> {
-          let patterns_str = list.map(patterns, render_pattern) |> string.join(", ")
+          let patterns_str =
+            list.map(patterns, render_pattern) |> string.join(", ")
           name <> "(" <> patterns_str <> ")"
         }
       }
     }
-    
+
     c.AsPattern(pattern, name) -> {
       render_pattern(pattern) <> " as " <> name
     }
@@ -212,11 +220,11 @@ pub fn render_declaration(decl: c.Declaration) -> String {
       // TODO: Extract the actual declaration from details
       "// TODO: Implement declaration rendering for " <> details.name
     }
-    
+
     c.Comment(text) -> "// " <> text
     c.ModuleDocs(text) -> "/// " <> text
     c.Block(text) -> text
-    
+
     c.Group(declarations) -> {
       list.map(declarations, render_declaration) |> string.join("\n\n")
     }
@@ -225,17 +233,21 @@ pub fn render_declaration(decl: c.Declaration) -> String {
 
 /// Render a complete file to source code  
 /// Note: This will be implemented when we integrate with the main File type
-pub fn render_file_placeholder(module_name: List(String), declarations: List(c.Declaration)) -> String {
+pub fn render_file_placeholder(
+  module_name: List(String),
+  declarations: List(c.Declaration),
+) -> String {
   // Module declaration (Gleam doesn't use explicit module declarations like Elm)
   let module_comment = case list.is_empty(module_name) {
     True -> ""
     False -> "// Module: " <> string.join(module_name, ".") <> "\n\n"
   }
-  
+
   // Declarations
-  let declarations_str = list.map(declarations, render_declaration)
+  let declarations_str =
+    list.map(declarations, render_declaration)
     |> string.join("\n\n")
-  
+
   module_comment <> declarations_str
 }
 
@@ -250,7 +262,8 @@ fn get_operator_precedence(op: String) -> Int {
     "<>" -> 5
     "+" | "-" -> 6
     "*" | "/" | "%" -> 7
-    _ -> 10  // Default high precedence
+    _ -> 10
+    // Default high precedence
   }
 }
 
@@ -274,18 +287,18 @@ pub fn render_type(type_: c.GleamType) -> String {
     c.StringType -> "String"
     c.BoolType -> "Bool"
     c.NilType -> "Nil"
-    
+
     c.ListType(inner) -> "List(" <> render_type(inner) <> ")"
     c.TupleType(types) -> {
       let types_str = list.map(types, render_type) |> string.join(", ")
       "#(" <> types_str <> ")"
     }
-    
+
     c.FunctionType(args, return) -> {
       let args_str = list.map(args, render_type) |> string.join(", ")
       "fn(" <> args_str <> ") -> " <> render_type(return)
     }
-    
+
     c.CustomType(module, name, args) -> {
       let module_prefix = case list.is_empty(module) {
         True -> ""
@@ -297,12 +310,12 @@ pub fn render_type(type_: c.GleamType) -> String {
       }
       module_prefix <> name <> args_str
     }
-    
+
     c.TypeVariable(name) -> name
-    
-    c.ResultType(ok, error) -> 
+
+    c.ResultType(ok, error) ->
       "Result(" <> render_type(ok) <> ", " <> render_type(error) <> ")"
-    
+
     c.OptionType(inner) -> "Option(" <> render_type(inner) <> ")"
   }
 }

@@ -1,0 +1,122 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        gleam-version: ['1.11.0', '1.12.0']
+        target: ['javascript', 'erlang']
+        exclude:
+          # Skip Erlang on older Gleam versions to reduce CI time
+          - gleam-version: '1.11.0'
+            target: 'erlang'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install Erlang/OTP (for Erlang target)
+      if: matrix.target == 'erlang'
+      uses: erlef/setup-beam@v1
+      with:
+        otp-version: '26.0'
+        gleam-version: ${{ matrix.gleam-version }}
+        
+    - name: Install Gleam (for JavaScript target)
+      if: matrix.target == 'javascript'
+      run: |
+        curl -Lo gleam.tar.gz "https://github.com/gleam-lang/gleam/releases/download/v${{ matrix.gleam-version }}/gleam-v${{ matrix.gleam-version }}-x86_64-unknown-linux-musl.tar.gz"
+        tar -xzf gleam.tar.gz
+        chmod +x gleam
+        sudo mv gleam /usr/local/bin/
+        gleam --version
+        
+    - name: Cache Gleam dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          build/packages
+          ~/.cache/gleam
+        key: ${{ runner.os }}-gleam-${{ matrix.gleam-version }}-${{ hashFiles('**/gleam.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-gleam-${{ matrix.gleam-version }}-
+          ${{ runner.os }}-gleam-
+          
+    - name: Download dependencies
+      run: gleam deps download
+      
+    - name: Check formatting
+      run: gleam format --check src test
+      
+    - name: Build project
+      run: gleam build --target ${{ matrix.target }}
+      
+    - name: Run tests
+      run: gleam test --target ${{ matrix.target }}
+      
+    - name: Run example demos (JavaScript only)
+      if: matrix.target == 'javascript'
+      run: |
+        echo "Running basic example..."
+        gleam run --target javascript --module example
+        echo "Running full demo..."
+        gleam run --target javascript --module demo
+        echo "Running package binding demo..."
+        gleam run --target javascript --module package_binding_demo
+        echo "Running complete workflow demo..."
+        gleam run --target javascript --module complete_workflow_demo
+        
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install Gleam
+      run: |
+        curl -Lo gleam.tar.gz "https://github.com/gleam-lang/gleam/releases/download/v1.12.0/gleam-v1.12.0-x86_64-unknown-linux-musl.tar.gz"
+        tar -xzf gleam.tar.gz
+        chmod +x gleam
+        sudo mv gleam /usr/local/bin/
+        
+    - name: Check formatting
+      run: gleam format --check src test
+      
+    - name: Check for unused dependencies
+      run: gleam deps list --outdated || true
+      
+  docs:
+    name: Generate Documentation
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install Gleam
+      run: |
+        curl -Lo gleam.tar.gz "https://github.com/gleam-lang/gleam/releases/download/v1.12.0/gleam-v1.12.0-x86_64-unknown-linux-musl.tar.gz"
+        tar -xzf gleam.tar.gz
+        chmod +x gleam
+        sudo mv gleam /usr/local/bin/
+        
+    - name: Build documentation
+      run: gleam docs build
+      
+    - name: Upload documentation artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: documentation
+        path: build/docs/
+        retention-days: 30

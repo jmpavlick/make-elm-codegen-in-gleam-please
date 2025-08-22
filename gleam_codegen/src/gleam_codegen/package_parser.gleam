@@ -2,10 +2,10 @@
 // Extracts function signatures and types from Gleam source files
 // to generate bindings similar to elm-codegen
 
-import gleam/string
 import gleam/list
-import gleam/result
 import gleam/option.{type Option, None, Some}
+import gleam/result
+import gleam/string
 import simplifile
 
 // ===== TYPES =====
@@ -14,10 +14,11 @@ import simplifile
 pub type GleamFunction {
   GleamFunction(
     name: String,
-    args: List(#(String, String)), // (name, type)
+    args: List(#(String, String)),
+    // (name, type)
     return_type: String,
     is_public: Bool,
-    documentation: Option(String)
+    documentation: Option(String),
   )
 }
 
@@ -28,7 +29,7 @@ pub type GleamTypeDefinition {
     type_vars: List(String),
     constructors: List(GleamConstructor),
     is_public: Bool,
-    documentation: Option(String)
+    documentation: Option(String),
   )
 }
 
@@ -43,7 +44,7 @@ pub type GleamModule {
     name: String,
     functions: List(GleamFunction),
     types: List(GleamTypeDefinition),
-    imports: List(String)
+    imports: List(String),
   )
 }
 
@@ -52,20 +53,24 @@ pub type GleamModule {
 /// Parse a Gleam source file and extract its public interface
 pub fn parse_module_from_file(file_path: String) -> Result(GleamModule, String) {
   case simplifile.read(file_path) {
-    Ok(content) -> parse_module_from_string(content, extract_module_name(file_path))
+    Ok(content) ->
+      parse_module_from_string(content, extract_module_name(file_path))
     Error(_) -> Error("Could not read file: " <> file_path)
   }
 }
 
 /// Parse a Gleam source string and extract its interface
-pub fn parse_module_from_string(content: String, module_name: String) -> Result(GleamModule, String) {
+pub fn parse_module_from_string(
+  content: String,
+  module_name: String,
+) -> Result(GleamModule, String) {
   let lines = string.split(content, "\n")
-  
+
   Ok(GleamModule(
     name: module_name,
     functions: parse_functions(lines),
     types: parse_types(lines),
-    imports: parse_imports(lines)
+    imports: parse_imports(lines),
   ))
 }
 
@@ -83,37 +88,37 @@ fn parse_functions(lines: List(String)) -> List(GleamFunction) {
   lines
   |> list.fold(#([], None, []), fn(acc, line) {
     let #(functions, current_doc, doc_lines) = acc
-    
+
     case string.trim(line) {
       // Documentation comment
-      "///" <> doc_line -> 
-        #(functions, current_doc, [string.trim(doc_line), ..doc_lines])
-      
+      "///" <> doc_line -> #(functions, current_doc, [
+        string.trim(doc_line),
+        ..doc_lines
+      ])
+
       // Public function definition
       "pub fn " <> rest -> {
         let doc = case doc_lines {
           [] -> None
           lines -> Some(string.join(list.reverse(lines), "\n"))
         }
-        
+
         case parse_function_signature(rest) {
           Some(func) -> {
-            let updated_func = GleamFunction(
-              ..func,
-              is_public: True,
-              documentation: doc
-            )
+            let updated_func =
+              GleamFunction(..func, is_public: True, documentation: doc)
             #([updated_func, ..functions], None, [])
           }
           None -> #(functions, None, [])
         }
       }
-      
+
       // Clear doc accumulator for non-doc, non-function lines
-      _ -> case string.starts_with(string.trim(line), "///") {
-        True -> acc
-        False -> #(functions, current_doc, [])
-      }
+      _ ->
+        case string.starts_with(string.trim(line), "///") {
+          True -> acc
+          False -> #(functions, current_doc, [])
+        }
     }
   })
   |> fn(result) { result.0 }
@@ -129,13 +134,14 @@ fn parse_function_signature(signature_line: String) -> Option(GleamFunction) {
         Ok(#(args_str, return_part)) -> {
           let args = parse_function_args(args_str)
           let return_type = parse_return_type(return_part)
-          
+
           Some(GleamFunction(
             name: string.trim(name),
             args: args,
             return_type: return_type,
-            is_public: False, // Will be set by caller
-            documentation: None
+            is_public: False,
+            // Will be set by caller
+            documentation: None,
           ))
         }
         Error(_) -> None
@@ -150,14 +156,14 @@ fn parse_function_args(args_str: String) -> List(#(String, String)) {
   case string.trim(args_str) {
     "" -> []
     args -> {
-             string.split(args, ",")
-       |> list.map(string.trim)
-       |> list.filter_map(fn(arg) {
-         case string.split_once(arg, ":") {
-           Ok(#(name, type_)) -> Ok(#(string.trim(name), string.trim(type_)))
-           Error(_) -> Error(Nil)
-         }
-       })
+      string.split(args, ",")
+      |> list.map(string.trim)
+      |> list.filter_map(fn(arg) {
+        case string.split_once(arg, ":") {
+          Ok(#(name, type_)) -> Ok(#(string.trim(name), string.trim(type_)))
+          Error(_) -> Error(Nil)
+        }
+      })
     }
   }
 }
@@ -172,7 +178,8 @@ fn parse_return_type(return_part: String) -> String {
       |> result.unwrap(type_part)
       |> string.trim
     }
-    Error(_) -> "Nil" // No explicit return type means Nil
+    Error(_) -> "Nil"
+    // No explicit return type means Nil
   }
 }
 
@@ -184,15 +191,18 @@ fn parse_types(lines: List(String)) -> List(GleamTypeDefinition) {
     let trimmed = string.trim(line)
     case string.starts_with(trimmed, "pub type ") {
       True -> {
-        let type_line = string.drop_start(trimmed, 9) // Remove "pub type "
+        let type_line = string.drop_start(trimmed, 9)
+        // Remove "pub type "
         case string.split_once(type_line, " {") {
           Ok(#(name_part, _)) -> {
             Ok(GleamTypeDefinition(
               name: string.trim(name_part),
-              type_vars: [], // TODO: Parse type variables
-              constructors: [], // TODO: Parse constructors
+              type_vars: [],
+              // TODO: Parse type variables
+              constructors: [],
+              // TODO: Parse constructors
               is_public: True,
-              documentation: None
+              documentation: None,
             ))
           }
           Error(_) -> Error(Nil)
@@ -210,14 +220,16 @@ fn parse_imports(lines: List(String)) -> List(String) {
     let trimmed = string.trim(line)
     case string.starts_with(trimmed, "import ") {
       True -> {
-        let import_line = string.drop_start(trimmed, 7) // Remove "import "
+        let import_line = string.drop_start(trimmed, 7)
+        // Remove "import "
         // Extract just the module name, ignoring any aliases or exposing clauses
         case string.split_once(import_line, ".{") {
           Ok(#(module_name, _)) -> Ok(string.trim(module_name))
-          Error(_) -> case string.split_once(import_line, " as ") {
-            Ok(#(module_name, _)) -> Ok(string.trim(module_name))
-            Error(_) -> Ok(string.trim(import_line))
-          }
+          Error(_) ->
+            case string.split_once(import_line, " as ") {
+              Ok(#(module_name, _)) -> Ok(string.trim(module_name))
+              Error(_) -> Ok(string.trim(import_line))
+            }
         }
       }
       False -> Error(Nil)
