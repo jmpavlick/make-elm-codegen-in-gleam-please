@@ -3,6 +3,7 @@
 
 import gleam_codegen/internal/compiler as c
 import gleam_codegen/op
+import gleam_codegen/to_string
 
 // ===== FILE GENERATION =====
 
@@ -21,9 +22,14 @@ pub fn file(module_name: List(String), declarations: List(c.Declaration)) -> Fil
 }
 
 /// Convert a file to Gleam source code string
-pub fn to_string(_file: File) -> String {
-  // TODO: Implement file rendering
-  "// Generated Gleam code\n// TODO: Implement rendering"
+pub fn to_string(file: File) -> String {
+  let File(module_name, declarations, _imports) = file
+  to_string.render_file_placeholder(module_name, declarations)
+}
+
+/// Convert an expression to Gleam source code string
+pub fn expression_to_string(expr: c.Expression) -> String {
+  to_string.expression_to_string(expr)
 }
 
 // ===== BASIC EXPRESSIONS =====

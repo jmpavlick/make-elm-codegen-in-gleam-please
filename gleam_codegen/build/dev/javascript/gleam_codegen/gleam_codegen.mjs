@@ -1,6 +1,7 @@
 import { toList, CustomType as $CustomType } from "./gleam.mjs";
 import * as $c from "./gleam_codegen/internal/compiler.mjs";
 import * as $op from "./gleam_codegen/op.mjs";
+import * as $to_string from "./gleam_codegen/to_string.mjs";
 
 export class File extends $CustomType {
   constructor(module_name, declarations, imports) {
@@ -21,8 +22,19 @@ export function file(module_name, declarations) {
 /**
  * Convert a file to Gleam source code string
  */
-export function to_string(_) {
-  return "// Generated Gleam code\n// TODO: Implement rendering";
+export function to_string(file) {
+  let module_name;
+  let declarations;
+  module_name = file.module_name;
+  declarations = file.declarations;
+  return $to_string.render_file_placeholder(module_name, declarations);
+}
+
+/**
+ * Convert an expression to Gleam source code string
+ */
+export function expression_to_string(expr) {
+  return $to_string.expression_to_string(expr);
 }
 
 /**

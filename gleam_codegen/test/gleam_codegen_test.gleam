@@ -1,5 +1,6 @@
 import gleeunit
 import gleeunit/should
+import gleam/string
 import gleam_codegen as gc
 
 pub fn main() {
@@ -43,8 +44,15 @@ pub fn file_creation_test() {
   let file = gc.file(["my_module"], declarations)
   let output = gc.to_string(file)
   
+  // The output should now include the rendered declarations  
   output
-  |> should.equal("// Generated Gleam code\n// TODO: Implement rendering")
+  |> should.not_equal("// Generated Gleam code\n// TODO: Implement rendering")
+  
+  // Check that it contains expected content
+  case string.contains(output, "// Module: my_module") && string.contains(output, "// TODO: declaration my_value") {
+    True -> True |> should.be_true
+    False -> should.fail()
+  }
 }
 
 // Test that operators compile (even if they don't work properly yet)

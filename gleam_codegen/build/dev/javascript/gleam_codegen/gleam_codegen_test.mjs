@@ -1,3 +1,4 @@
+import * as $string from "../gleam_stdlib/gleam/string.mjs";
 import * as $gleeunit from "../gleeunit/gleeunit.mjs";
 import * as $should from "../gleeunit/gleeunit/should.mjs";
 import { toList } from "./gleam.mjs";
@@ -43,10 +44,20 @@ export function file_creation_test() {
   let file = $gc.file(toList(["my_module"]), declarations);
   let output = $gc.to_string(file);
   let _pipe = output;
-  return $should.equal(
+  $should.not_equal(
     _pipe,
     "// Generated Gleam code\n// TODO: Implement rendering",
+  )
+  let $ = $string.contains(output, "// Module: my_module") && $string.contains(
+    output,
+    "// TODO: declaration my_value",
   );
+  if ($) {
+    let _pipe$1 = true;
+    return $should.be_true(_pipe$1);
+  } else {
+    return $should.fail();
+  }
 }
 
 export function operators_compile_test() {

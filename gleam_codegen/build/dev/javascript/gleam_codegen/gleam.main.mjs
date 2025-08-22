@@ -1,2 +1,2 @@
-import { main } from "./example.mjs";
+import { main } from "./demo.mjs";
 main();
